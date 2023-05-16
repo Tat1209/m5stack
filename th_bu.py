@@ -138,10 +138,12 @@ def ref_rtc(force=False):
                 break
 
     try:
-        ntp = ntptime.client(host='jp.pool.ntp.org', timezone=9 -2)
+        ntp = ntptime.client(host='jp.pool.ntp.org', timezone=9)
     except:
         if force: raise Exception('Failed to connect to NTP server.\nCan\'t get time.')
     
+
+
 
 class TickDist:
     def __init__(self, itv_sec):
@@ -185,6 +187,7 @@ class LogSit:
         # with open(self.fname, 'r') as f: printm(f.read())
             
 
+
     def shift_row(self, num):
         if num > self.row-1 : num = self.row-1
         for _ in range(num):
@@ -196,6 +199,29 @@ class LogSit:
 
     def get_today_ratio(self):
         return sum(self.data[self.row-1]) / self.column
+
+
+class SitItv(TickDist):
+    def __init__(self, itv_sec, day_sec, sj, pct_tick, pct_sit):
+        super().__init__(itv_sec)
+        self.day_sec = day_sec
+        self.sj = sj
+        self.pct_tick = pct_tick
+        self.pct_sit = pct_sit        
+
+        self.ticks = 0
+        self.ticks_true = 0
+
+    def process(self, cur_time, log_s):
+        if self.is_exc(cur_time):
+            j = (cur_time % (self.day_sec)) // self.itv_sec
+            if self.ticks_true / max(self.ticks, 1) >= self.pct_sit: log_s.data[log_s.row-1][j] = 1
+            log_s.write_csv()
+            self.ticks = 0
+            self.ticks_true = 0
+        else:
+            self.ticks += 1
+            if self.sj.is_sitting(self.pct_tick): self.ticks_true += 1
 
 
 class LogDay:
@@ -222,32 +248,8 @@ class LogDay:
         with open(self.fname, 'w') as f:
             f.write(','.join(map(str, self.data)) + '\n' + str(self.date))
 
-        #############dbg
         # with open(self.fname, 'r') as f: printm(f.read())
             
-
-class SitItv(TickDist):
-    def __init__(self, itv_sec, day_sec, sj, pct_tick, pct_sit):
-        super().__init__(itv_sec)
-        self.day_sec = day_sec
-        self.sj = sj
-        self.pct_tick = pct_tick
-        self.pct_sit = pct_sit        
-
-        self.ticks = 0
-        self.ticks_true = 0
-
-    def process(self, cur_time, log_s):
-        if self.is_exc(cur_time):
-            j = (cur_time % (self.day_sec)) // self.itv_sec
-            if self.ticks_true / max(self.ticks, 1) >= self.pct_sit: log_s.data[log_s.row-1][j] = 1
-            log_s.write_csv()
-            self.ticks = 0
-            self.ticks_true = 0
-        else:
-            self.ticks += 1
-            if self.sj.is_sitting(self.pct_tick): self.ticks_true += 1
-
 
 class DayItv(TickDist):
     def __init__(self, itv_sec):
@@ -255,98 +257,39 @@ class DayItv(TickDist):
 
     def process(self, cur_time, log_d, log_s):
         if self.is_exc(cur_time):
-            ####################################tmp
-            # log_d.data.append(log_s.get_today_ratio())
-            # log_d.write_csv()
+            log_d.data.append(log_s.get_today_ratio())
+            log_d.write_csv()
             log_d.date += 1
             log_s.shift_row(1)
             log_s.date += 1
 
-
-class TimeRefItv(TickDist):
-    def __init__(self, itv_sec):
-        super().__init__(itv_sec)
-
-    def process(self, cur_time):
-        if self.is_exc(cur_time): ref_rtc(force=False)
-
-
 ################################################
-# global variable
-
-ref_rtc(force=True)
-sit_sec = 3 
-day_sec = 288 * 3 
-ref_sec = 4 * 60 * 60
-
-sit_per_day = int(day_sec/sit_sec)
-date = utime.time() // day_sec
-
-log_s = LogSit("log_sit.txt", 3, sit_per_day, date)
-log_d = LogDay("log_day.txt", date)
-sj = SitJudge(size=20)
-si = SitItv(sit_sec, day_sec, sj, 0.72, 5/300)
-di = DayItv(day_sec)
-tri = TimeRefItv(ref_sec)
-
-
-
 labels = []
-def clear_disp():
+def del_labels():
     global labels
-    lcd.clear(0x999999)
     for l in labels: l.delete()
     labels = []
     
 def initA():
     global labels
-    clear_disp()
-    labels.append(M5Label(None, color=0x63707a, font=FONT_MONT_22))
-    labels.append(M5Label(None, color=0x63707a, font=FONT_MONT_22))
-    labels.append(M5Label(None, color=0x3d445c, font=FONT_MONT_48))
-
+    del_labels()
+    labels.append(M5Label(None, color=0x7e8b96, font=FONT_MONT_22))
+    labels.append(M5Label(None, color=0x363f59, font=FONT_MONT_48))
 
 def tick_processA():
     global labels
     year, month, day, hour, minute, second, weekday, yearday = utime.localtime()
     disp_date = "%04d/%02d/%02d" % (year, month, day)
-    labels[0].set_text(disp_date)
-    labels[0].set_align(ALIGN_CENTER, x=-30, y=-20, ref=screen.obj)
-
-    disp_dow = ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat.", "Sun."]
-    labels[1].set_text(disp_dow[weekday])
-    labels[1].set_align(ALIGN_CENTER, x=65, y=-20, ref=screen.obj)
-    if weekday == 5: labels[1].set_text_color(0x5753b5)
-    elif weekday == 6: labels[1].set_text_color(0xb55353)
-    else: labels[1].set_text_color(0x63707a)
-    
     disp_time = "%02d:%02d:%02d" % (hour, minute, second)
-    labels[2].set_text(disp_time)
-    labels[2].set_align(ALIGN_CENTER, y=20, ref=screen.obj)
-
-    # disp_time = "%d:%02d:%02d" % (hour, minute, second)
-    # labels[2].set_text(disp_time)
-    # labels[2].set_align(ALIGN_CENTER, y=20, ref=screen.obj)
-
+    labels[0].set_text(disp_date)
+    labels[0].set_align(ALIGN_CENTER, y=-20, ref=screen.obj)
+    labels[1].set_text(disp_time)
+    labels[1].set_align(ALIGN_CENTER, y=20, ref=screen.obj)
 
 
 def initB():
     global labels
-    clear_disp()
-    text_st = (16, 20)
-    graph_st = (16, 50)
-    graph_h = 20
-    all_h = 40
-    
-    printm(sum(sum(log_s.data, [])))
-
-    for di, day in enumerate(log_s.data):
-        text_p = (text_st[0], text_st[1]+di*all_h)
-        graph_p = (graph_st[0], graph_st[1]+di*all_h)
-        for li, log in enumerate(day):
-            if log == 1: color_line = 0x385075
-            else: color_line = 0xa5a5a5
-            lcd.line(graph_p[0]+li, graph_p[1], graph_p[0]+li, graph_p[1]+graph_h, color_line)
+    del_labels()
 
 def tick_processB():
     pass
@@ -354,48 +297,64 @@ def tick_processB():
 
 def initC():
     global labels
-    clear_disp()
+    del_labels()
 
 def tick_processC():
     pass
             
 
-
-
 def tick_process(cur_time, status):
     if status is None  or  status == "A": tick_processA()
     if status == "B": tick_processB()
     if status == "C": tick_processC()
-
-    di.process(cur_time, log_d, log_s)
-    si.process(cur_time, log_s)
-    tri.process(cur_time)
             
 
+def subprocess():
+    sit_sec = 2
+    day_sec = 10 * 2
+    sit_per_day = int(day_sec/sit_sec)
+    date = utime.time() // day_sec
+
+    log_s = LogSit("log_sit.txt", 3, sit_per_day, date)
+    log_d = LogDay("log_day.txt", date)
+    sj = SitJudge(size=20)
+    si = SitItv(sit_sec, day_sec, sj, 0.72, 5/300)
+    di = DayItv(day_sec)
+
+    while True:
+        printm(log_d.data)
+        if btnA.isPressed(): break
+        cur_time = utime.time()
+        di.process(cur_time, log_d, log_s)
+        si.process(cur_time, log_s)
+
+
 def main():
+    ref_rtc(force=True)
+
     set_bgcolor(0x999999)
     status = None
     initA()
     while True:
         if btnA.isPressed(): 
-            if status != "A":
-                initA()
-                status = "A"
-            else: break
+            initA()
+            if status == "A": break
+            status = "A"
         if btnB.isPressed(): 
-            # if status != "B":
             initB()
             status = "B"
         if btnC.isPressed(): 
-            # if status != "C":
             initC()
             status = "C"
         cur_time = utime.time()
         tick_process(cur_time, status)
     printm("main_stop")
+    
 
-main()
+_thread.start_new_thread(main, ())
+_thread.start_new_thread(subprocess, ())
 
+# 
 
 # start = time.ticks_us()
 # printm(time.ticks_us() - start)
