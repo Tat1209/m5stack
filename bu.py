@@ -125,8 +125,10 @@ def disp_process(result):
 
 
 def ref_rtc(force=False):
-    ssid = "Buffalo-G-2E40"
-    password = "mv6dgb383bx5f"
+    # ssid = "Buffalo-G-2E40"
+    # password = "mv6dgb383bx5f"
+    ssid = "haselab"
+    password = "haselove"
     if not wifiCfg.wlan_sta.isconnected():
         printm("Connecting to Wi-Fi...\nSSID : " + ssid)
         wifiCfg.connect(ssid, password, timeout=10)
@@ -138,7 +140,8 @@ def ref_rtc(force=False):
                 break
 
     try:
-        ntp = ntptime.client(host='jp.pool.ntp.org', timezone=9 -2)
+        # ntp = ntptime.client(host='jp.pool.ntp.org', timezone=9 + (-24 * 2))
+        ntp = ntptime.client(host='jp.pool.ntp.org', timezone=9)
     except:
         if force: raise Exception('Failed to connect to NTP server.\nCan\'t get time.')
     
@@ -279,10 +282,12 @@ sit_sec = 3
 day_sec = 288 * 3 
 ref_sec = 4 * 60 * 60
 
+log_lines = 4
+
 sit_per_day = int(day_sec/sit_sec)
 date = utime.time() // day_sec
 
-log_s = LogSit("log_sit.txt", 3, sit_per_day, date)
+log_s = LogSit("log_sit.txt", log_lines, sit_per_day, date)
 log_d = LogDay("log_day.txt", date)
 sj = SitJudge(size=20)
 si = SitItv(sit_sec, day_sec, sj, 0.72, 5/300)
@@ -330,20 +335,41 @@ def tick_processA():
 
 
 
-def initB():
+def initB(log_lines):
     global labels
     clear_disp()
-    text_st = (16, 20)
-    graph_st = (16, 50)
-    graph_h = 20
-    all_h = 40
+    text_st = (16, 15)
+    graph_st = (16, text_st[1]+23)
+    graph_h = 23
+    all_h = 55
     
-    printm(sum(sum(log_s.data, [])))
+    for _ in range(log_lines): labels.append(M5Label(None, color=0x63707a, font=FONT_MONT_18))
+    for _ in range(log_lines): labels.append(M5Label(None, color=0x63707a, font=FONT_MONT_18))
+    
+    # printm(sum(sum(log_s.data, [])))
+    now = utime.localtime()
 
-    for di, day in enumerate(log_s.data):
+    for di, log_day in enumerate(log_s.data):
+        ts = utime.mktime(now) - 86400 * (log_lines - di - 1)
+        year, month, day, hour, minute, second, weekday, yearday = utime.localtime(ts)
+
         text_p = (text_st[0], text_st[1]+di*all_h)
         graph_p = (graph_st[0], graph_st[1]+di*all_h)
-        for li, log in enumerate(day):
+        disp_dow = ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat.", "Sun."]
+        text = "%02d/%02d %s" % (month, day, disp_dow[weekday])
+        if di == log_lines - 1: text += " (Today)"
+        labels[di].set_text(text)
+        labels[di].set_pos(text_p[0], text_p[1])
+        sit_time_m = sum(log_day) * sit_sec // 60 * 100
+        # sit_time_m = sum(log_day) * sit_sec // 60
+        text = "%dh%dm" % divmod(sit_time_m, 60)
+        labels[di+log_lines].set_text(text)
+        labels[di+log_lines].set_align(ALIGN_IN_TOP_RIGHT, x=-16, y=text_p[1], ref=screen.obj)
+        if weekday == 5: labels[di].set_text_color(0x5753b5)
+        elif weekday == 6: labels[di].set_text_color(0xb55353)
+        else: labels[di].set_text_color(0x63707a)
+
+        for li, log in enumerate(log_day):
             if log == 1: color_line = 0x385075
             else: color_line = 0xa5a5a5
             lcd.line(graph_p[0]+li, graph_p[1], graph_p[0]+li, graph_p[1]+graph_h, color_line)
@@ -384,7 +410,7 @@ def main():
             else: break
         if btnB.isPressed(): 
             # if status != "B":
-            initB()
+            initB(log_lines)
             status = "B"
         if btnC.isPressed(): 
             # if status != "C":
