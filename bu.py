@@ -19,13 +19,13 @@ screen.set_screen_bg_color(0xFFFFFF)
 
 tof_0 = unit.get(unit.TOF, unit.PORTA)
 
-lab_printm = M5Label("", color=0x00, font=FONT_MONT_18)
+lab_printm = M5Label("", color=0x00, font=FONT_MONT_14)
 # lab_printm = M5Label("", color=0x00, font=FONT_MONT_26)
 str_printm = ""
 
 def wrap_text(text):
     text = text.strip()
-    n = 40
+    n = 45
     lines = text.split("\n")
     for i in range(len(lines)):
         lines[i] = '\n'.join(lines[i][j:j+n] for j in range(0, len(lines[i]), n))
@@ -360,7 +360,7 @@ def initB(log_lines):
         if di == log_lines - 1: text += " (Today)"
         labels[di].set_text(text)
         labels[di].set_pos(text_p[0], text_p[1])
-        sit_time_m = sum(log_day) * sit_sec // 60 * 100
+        sit_time_m = sum(log_day) * sit_sec * 100 // 60
         # sit_time_m = sum(log_day) * sit_sec // 60
         text = "%dh%dm" % divmod(sit_time_m, 60)
         labels[di+log_lines].set_text(text)
@@ -390,8 +390,8 @@ def tick_processC():
 
 def tick_process(cur_time, status):
     if status is None  or  status == "A": tick_processA()
-    if status == "B": tick_processB()
-    if status == "C": tick_processC()
+    # if status == "B": tick_processB()
+    # if status == "C": tick_processC()
 
     di.process(cur_time, log_d, log_s)
     si.process(cur_time, log_s)
@@ -420,7 +420,25 @@ def main():
         tick_process(cur_time, status)
     printm("main_stop")
 
-main()
+# main()
+# btnB = M5Btn(text='B', x=120, y=10, w=100, h=100, bg_c=0x00FF00, text_c=0xFFFFFF, font=FONT_MONT_14)
+# btnB.set_hidden(True)
+
+def gradient(color_a: int, color_b: int, fraction: float) -> int:
+    r = color_b >> 16
+    g = (color_b >> 8) & 0xff
+    b = color_b & 0xff
+    base_r = color_a >> 16
+    base_g = (color_a >> 8) & 0xff
+    base_b = color_a & 0xff
+    r = int(r * fraction + base_r * (1 - fraction))
+    g = int(g * fraction + base_g * (1 - fraction))
+    b = int(b * fraction + base_b * (1 - fraction))
+    y = (r << 16) + (g << 8) + b
+    return y
+
+printm(hex(gradient(0xffffff, 0xff0000, 0.2)))
+
 
 
 # start = time.ticks_us()
