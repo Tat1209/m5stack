@@ -113,10 +113,10 @@ def set_bgcolor(color):
 def disp_process(result):
     if result:
         out_val = "(*^^)v"
-        set_bgcolor(0x999999)
+        set_bgcolor(0xaaaaaa)
     else:
         out_val = "(-_-)zzz"
-        set_bgcolor(0x999999)
+        set_bgcolor(0xaaaaaa)
 
     out_val = str(out_val)
     lab_c.set_text(out_val)
@@ -289,14 +289,13 @@ def gradient(color_a: int, color_b: int, fraction: float) -> int:
 # global variable
 
 ref_rtc(force=True)
-# sit_sec = 3 
-# day_sec = 288 * 3 
-# ref_sec = 4 * 60 * 60
-sit_sec = 10 
-day_sec = 10 * 10 
+sit_sec = 300 
+day_sec = 24*60*60
 ref_sec = 4 * 60 * 60
-
-t = 24*60*60 /sit_sec // day_sec
+# sit_sec = 10 
+# day_sec = 10 * 10 
+# ref_sec = 4 * 60 * 60
+# t = 24*60*60 /sit_sec // day_sec
 
 log_lines = 4
 
@@ -316,11 +315,12 @@ buttons = []
 def clear_disp():
     global labels
     global buttons
-    lcd.clear(0x999999)
+    lcd.clear(0xaaaaaa)
     for l in labels: l.delete()
     labels = []
     for b in buttons: b.delete()
     buttons = []
+    lcd.clear(0xaaaaaa)
 
 
 def initA():
@@ -374,8 +374,8 @@ def initB():
         if di == log_lines - 1: text += " (Today)"
         labels[di].set_text(text)
         labels[di].set_pos(text_p[0], text_p[1])
-        sit_time_m = sum(log_day) * sit_sec * t // 60
-        # sit_time_m = sum(log_day) * sit_sec // 60
+        # sit_time_m = sum(log_day) * sit_sec * t // 60
+        sit_time_m = sum(log_day) * sit_sec // 60
         text = "%dh%dm" % divmod(sit_time_m, 60)
         labels[di+log_lines].set_text(text)
         labels[di+log_lines].set_align(ALIGN_IN_TOP_RIGHT, x=-16, y=text_p[1], ref=screen.obj)
@@ -404,8 +404,8 @@ def initC(di=0):
     month_y = 10
     week_sp = (12, button_sp[1] + 2)
 
-    total_time = sum(log_d.data)
-    total_time_tuple = (int(total_time), int(60 * (total_time - int(total_time))))
+    total_time_hour = sum(log_d.data) * 24
+    total_time_tuple = (int(total_time_hour), int(60 * (total_time_hour - int(total_time_hour))))
     total_time_text = "Total : " + str(total_time_tuple[0]) + "h" + str(total_time_tuple[1]) + "m"
     labels.append(M5Label(total_time_text, color=0x63707a, font=FONT_MONT_18))
     labels[0].set_align(ALIGN_IN_BOTTOM_MID, x=0, y=-8, ref=screen.obj)
@@ -434,10 +434,10 @@ def initC(di=0):
         else:
             sit_time_s = log_d.data[day_offset] * day_sec
             
-            sit_time_m = sit_time_s // 60
-            sit_time = "%dh%dm" % divmod(sit_time_m, 60)
+        sit_time_m = sit_time_s // 60
+        sit_time = "%dh%dm" % divmod(sit_time_m, 60)
 
-        text = "%s/%02d/%02d %s  %s" % (str(year)[:2], month, day, disp_dow[weekday], sit_time)
+        text = "%s/%02d/%02d %s   %s" % (str(year)[2:], month, day, disp_dow[weekday], sit_time)
         labels[0].set_text(text)
         labels[0].set_align(ALIGN_IN_BOTTOM_MID, x=0, y=-8, ref=screen.obj)
         if weekday == 5: labels[0].set_text_color(0x5753b5)
@@ -469,7 +469,7 @@ def initC(di=0):
         button_p = (button_sp[0] + button_pix * button_d, button_sp[1] + button_piy * button_d)
 
 
-        tmp = day_val
+        # tmp = day_val
         grad = 8
         day_val = (1 - math.exp(-grad * day_val)) / (1 - math.exp(-grad))
         
@@ -478,8 +478,8 @@ def initC(di=0):
             month_str = ["Jan.", "Feb.", "Mar.", "Apr.", "May", "Jun.", "Jul.", "Aug.", "Sep.", "Oct.", "Nov.", "Dec."][date_info[1] - 1]
             labels.append(M5Label(month_str, x=button_p[0], y=month_y, color=0x63707a, font=FONT_MONT_14))
 
-        tmp_btn = M5Btn(text="", x=button_p[0], y=button_p[1], w=button_size, h=button_size, bg_c=gradient(0x999999, 0x39d353, day_val), text_c=0xffffff, font=FONT_MONT_10)
-        # tmp_btn = M5Btn(text=str(tmp)[:4], x=button_p[0], y=button_p[1], w=button_size, h=button_size, bg_c=gradient(0x999999, 0x39d353, day_val), text_c=0xffffff, font=FONT_MONT_10)
+        tmp_btn = M5Btn(text="", x=button_p[0], y=button_p[1], w=button_size, h=button_size, bg_c=gradient(0xaaaaaa, 0x39d353, day_val), text_c=0xffffff, font=FONT_MONT_10)
+        # tmp_btn = M5Btn(text=str(tmp)[:4], x=button_p[0], y=button_p[1], w=button_size, h=button_size, bg_c=gradient(0xaaaaaa, 0x39d353, day_val), text_c=0xffffff, font=FONT_MONT_10)
         tmp_btn.pressed(lambda day_offset=di: disp_date(day_offset))
         buttons.append(tmp_btn)
         
@@ -495,14 +495,14 @@ def initC(di=0):
     arrow_height = 33
     arrow_width = 40
     if prev_flag:
-        tmp_btn = M5Btn(text="<", x=arrow_x, y=arrow_y, w=arrow_width, h=arrow_height, bg_c=0xffffff, text_c=0x999999, font=FONT_MONT_22)
+        tmp_btn = M5Btn(text="<", x=arrow_x, y=arrow_y, w=arrow_width, h=arrow_height, bg_c=0xffffff, text_c=0xaaaaaa, font=FONT_MONT_22)
         def pr_proc():
             C_buf.append(end)
             initC(di)
         tmp_btn.pressed(pr_proc)
         buttons.append(tmp_btn)
     if next_flag:
-        tmp_btn = M5Btn(text=">", x=320-arrow_x-arrow_width, y=arrow_y, w=arrow_width, h=arrow_height, bg_c=0xffffff, text_c=0x999999, font=FONT_MONT_22)
+        tmp_btn = M5Btn(text=">", x=320-arrow_x-arrow_width, y=arrow_y, w=arrow_width, h=arrow_height, bg_c=0xffffff, text_c=0xaaaaaa, font=FONT_MONT_22)
         tmp_btn.pressed(lambda di=di: initC(C_buf.pop()))
         buttons.append(tmp_btn)
 
@@ -513,7 +513,7 @@ def tick_processC():
 
 
 def tick_process(cur_time, status):
-    if status is None  or  status == "A": tick_processA()
+    if status == "A": tick_processA()
     # if status == "B": tick_processB()
     # if status == "C": tick_processC()
 
@@ -522,35 +522,35 @@ def tick_process(cur_time, status):
     tri.process(cur_time)
 
 
+n = 4
+stop_dq = DQ(n)
 def main():
-    set_bgcolor(0x999999)
-    status = None
+    set_bgcolor(0xaaaaaa)
     initA()
+    status = "A"
+
     while True:
-        if btnA.isPressed(): 
+        if btnA.wasPressed(): 
+            stop_dq.enq(1)
+            if stop_dq.sum == n: break
             if status != "A":
                 initA()
                 status = "A"
-            else: break
-        if btnB.isPressed(): 
-            # if status != "B":
-            initB()
-            status = "B"
-        if btnC.isPressed(): 
-            # if status != "C":
-            initC()
-            status = "C"
+        if btnB.wasPressed(): 
+            stop_dq.enq(0)
+            if status != "B":
+                initB()
+                status = "B"
+        if btnC.wasPressed(): 
+            stop_dq.enq(0)
+            if status != "C":
+                initC()
+                status = "C"
         cur_time = utime.time()
         tick_process(cur_time, status)
     printm("main_stop")
 
 main()
 
-# printm(hex(gradient(0xffffff, 0xff0000, 0.2)))
-
-
-
-# start = time.ticks_us()
-# printm(time.ticks_us() - start)
 
 
