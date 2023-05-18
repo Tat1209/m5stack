@@ -522,7 +522,7 @@ def tick_process(cur_time, status):
     tri.process(cur_time)
 
 
-n = 4
+n = 5
 stop_dq = DQ(n)
 def main():
     set_bgcolor(0xaaaaaa)
@@ -548,7 +548,7 @@ def main():
                 status = "C"
         cur_time = utime.time()
         tick_process(cur_time, status)
-    printm("main_stop")
+    printm("Exited.")
 
 main()
 
