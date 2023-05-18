@@ -404,7 +404,7 @@ def initC(di=0):
     month_y = 10
     week_sp = (12, button_sp[1] + 2)
 
-    total_time_hour = sum(log_d.data) * 24
+    total_time_hour = sum(log_d.data) * 24 + sum(log_s.data[-1]) * sit_sec / 60 / 60
     total_time_tuple = (int(total_time_hour), int(60 * (total_time_hour - int(total_time_hour))))
     total_time_text = "Total : " + str(total_time_tuple[0]) + "h" + str(total_time_tuple[1]) + "m"
     labels.append(M5Label(total_time_text, color=0x63707a, font=FONT_MONT_18))
@@ -430,7 +430,7 @@ def initC(di=0):
         year, month, day, hour, minute, second, weekday, yearday = get_day(day_offset)
         disp_dow = ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat.", "Sun."]
         if day_offset == 0:
-            sit_time_s = sum(log_s.data[-1]) * day_sec
+            sit_time_s = sum(log_s.data[-1]) / len(log_s.data[-1]) * day_sec
         else:
             sit_time_s = log_d.data[day_offset] * day_sec
             
@@ -456,7 +456,7 @@ def initC(di=0):
     button_pix = 0
 
     while(True):
-        if -di < len(log_d.data):
+        if -di <= len(log_d.data):
             if di == 0:
                 day_val = sum(log_s.data[-1]) * sit_sec / day_sec
             else:
@@ -522,7 +522,7 @@ def tick_process(cur_time, status):
     tri.process(cur_time)
 
 
-n = 5
+n = 4
 stop_dq = DQ(n)
 def main():
     set_bgcolor(0xaaaaaa)
