@@ -137,7 +137,7 @@ def ref_rtc(force=False):
                 time.sleep(1)
                 printm()
                 break
-
+            
     try:
         ntp = ntptime.client(host='jp.pool.ntp.org', timezone=9)
     except:
@@ -291,19 +291,15 @@ def gradient(color_a: int, color_b: int, fraction: float) -> int:
 ref_rtc(force=True)
 sit_sec = 300 
 day_sec = 24*60*60
-ref_sec = 4 * 60 * 60
-# sit_sec = 10 
-# day_sec = 10 * 10 
-# ref_sec = 4 * 60 * 60
-# t = 24*60*60 /sit_sec // day_sec
+ref_sec = 4*60*60
 
 log_lines = 4
 
 sit_per_day = int(day_sec/sit_sec)
 date = utime.time() // day_sec
 
-log_s = LogSit("log_sit.txt", log_lines, sit_per_day, date)
-log_d = LogDay("log_day.txt", date)
+log_s = LogSit("log_sit.csv", log_lines, sit_per_day, date)
+log_d = LogDay("log_day.csv", date)
 sj = SitJudge(size=20)
 si = SitItv(sit_sec, day_sec, sj, 0.72, 5/300)
 di = DayItv(day_sec)
@@ -521,7 +517,6 @@ def tick_process(cur_time, status):
     si.process(cur_time, log_s)
     tri.process(cur_time)
 
-
 n = 4
 stop_dq = DQ(n)
 def main():
@@ -553,4 +548,4 @@ def main():
 main()
 
 
-
+# with open(.fname, 'r') as f: printm(f.read())
