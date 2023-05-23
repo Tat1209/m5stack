@@ -124,10 +124,10 @@ def disp_process(result):
 
 
 def ref_rtc(force=False):
-    # ssid = "Buffalo-G-2E40"
-    # password = "mv6dgb383bx5f"
-    ssid = "haselab"
-    password = "haselove"
+    ssid = "Buffalo-G-2E40"
+    password = "mv6dgb383bx5f"
+    # ssid = "haselab"
+    # password = "haselove"
     if not wifiCfg.wlan_sta.isconnected():
         printm("Connecting to Wi-Fi...\nSSID : " + ssid)
         wifiCfg.connect(ssid, password, timeout=10)
@@ -298,8 +298,8 @@ log_lines = 4
 sit_per_day = int(day_sec/sit_sec)
 date = utime.time() // day_sec
 
-log_s = LogSit("log_sit.csv", log_lines, sit_per_day, date)
-log_d = LogDay("log_day.csv", date)
+log_s = LogSit("log_sit.txt", log_lines, sit_per_day, date)
+log_d = LogDay("log_day.txt", date)
 sj = SitJudge(size=20)
 si = SitItv(sit_sec, day_sec, sj, 0.72, 5/300)
 di = DayItv(day_sec)
@@ -517,7 +517,7 @@ def tick_process(cur_time, status):
     si.process(cur_time, log_s)
     tri.process(cur_time)
 
-n = 4
+n = 30
 stop_dq = DQ(n)
 def main():
     set_bgcolor(0xaaaaaa)
@@ -525,18 +525,19 @@ def main():
     status = "A"
 
     while True:
-        if btnA.wasPressed(): 
+        if btnA.isPressed(): 
             stop_dq.enq(1)
             if stop_dq.sum == n: break
+            # elif stop_dq.sum < n: printm(stop_dq.sum)
             if status != "A":
                 initA()
                 status = "A"
-        if btnB.wasPressed(): 
+        if btnB.isPressed(): 
             stop_dq.enq(0)
             if status != "B":
                 initB()
                 status = "B"
-        if btnC.wasPressed(): 
+        if btnC.isPressed(): 
             stop_dq.enq(0)
             if status != "C":
                 initC()
@@ -547,5 +548,5 @@ def main():
 
 main()
 
-
-# with open(.fname, 'r') as f: printm(f.read())
+# with open("log_day.txt", 'r') as f: printm(f.read())
+# printm(log_d.data, log_d.date)
