@@ -243,6 +243,7 @@ class SitItv(TickDist):
             j = (cur_time % (self.day_sec)) // self.itv_sec
             if self.ticks_true / max(self.ticks, 1) >= self.pct_sit: log_s.data[log_s.row-1][j] = 1
             log_s.write_csv()
+            # printm(self.ticks)
             self.ticks = 0
             self.ticks_true = 0
         else:
@@ -301,7 +302,7 @@ date = utime.time() // day_sec
 log_s = LogSit("log_sit.txt", log_lines, sit_per_day, date)
 log_d = LogDay("log_day.txt", date)
 sj = SitJudge(size=20)
-si = SitItv(sit_sec, day_sec, sj, 0.72, 5/300)
+si = SitItv(sit_sec, day_sec, sj, 0.72, 7/300)
 di = DayItv(day_sec)
 tri = TimeRefItv(ref_sec)
 
